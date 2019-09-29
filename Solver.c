@@ -170,7 +170,7 @@ int main(int n, char **args)
 
     for (int i = 0; i < n - 1; i++)
     {
-        printf("String: %s\n", args[i + 1]);
+        printf("a%u: %s\n", n - i - 2, args[i + 1]);
         a.v[i] = atof(args[i + 1]);
     }
 
