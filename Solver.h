@@ -1,3 +1,7 @@
+#ifndef Solver_Header
+#define Solver_Header
+
+#include <stdio.h>
 #include "Matrix.h"
 #include "Vector.h"
 
@@ -6,4 +10,6 @@ Vector Solve_Gauss(Matrix, Vector);
 Vector Solve_Vandermonte(Vector, Vector);
 
 double myPow(double, unsigned int);
-void Compare(Vector);
+void Compare(FILE *, Vector);
+
+#endif

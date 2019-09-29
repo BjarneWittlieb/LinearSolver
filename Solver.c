@@ -1,5 +1,4 @@
 #include "Matrix.h"
-#include "Matrix_Util.h"
 #include "Matrix_Rotate.h"
 #include "Vector.h"
 #include "Solver.h"
@@ -92,9 +91,9 @@ Vector Solve_Gauss(Matrix A, Vector b)
 Vector Solve_Vandermonte(Vector x, Vector rhs)
 {
     // the outer loop, where the dimension goes down. but the actual value i need is low, so dimension goes up i guess
-    for (int dim = 1; dim <= x.n; dim++)
+    for (int dim = 1; (unsigned int)dim <= x.n; dim++)
     {
-        for (int i = dim; i < x.n; i++)
+        for (int i = dim; (unsigned int)i < x.n; i++)
         {
             rhs.v[i] = (rhs.v[i] - rhs.v[dim - 1]) / (x.v[i] - x.v[dim - 1]);
         }
@@ -102,7 +101,7 @@ Vector Solve_Vandermonte(Vector x, Vector rhs)
     // Vector_Report(stdout, rhs, "%lf", "the vector rhs in mid");
     for (int xi = x.n - 2; xi >= 0; xi--)
     {
-        for (int i = xi; i < x.n - 1; i++)
+        for (int i = xi; (unsigned int)i < x.n - 1; i++)
         {
             rhs.v[i] = rhs.v[i] - x.v[xi] * rhs.v[i + 1];
             // printf("i: %u, xi: %u\n", i, xi);
@@ -113,7 +112,7 @@ Vector Solve_Vandermonte(Vector x, Vector rhs)
     return rhs;
 }
 
-void Compare(Vector alpha)
+void Compare(FILE *F, Vector alpha)
 {
     Vector x;
     Vector rhs;
@@ -124,25 +123,30 @@ void Compare(Vector alpha)
     step = 2.0 / (alpha.n - 1);
 
     // creating the vector x
-    for (int i = 0; i < alpha.n; i++)
+    for (int i = 0; (unsigned int)i < alpha.n; i++)
     {
         x.v[i] = -1.0 + step * i;
     }
 
     // evaluting the right hand side
-    for (int i = 0; i < x.n; i++)
+    for (int i = 0; (unsigned int)i < x.n; i++)
     {
-        for (int j = 0; j < x.n; j++)
+        for (int j = 0; (unsigned int)j < x.n; j++)
         {
-            rhs.v[i] += myPow(x.v[i], j) * alpha.v[j];
+            rhs.v[i] += myPow(x.v[i], (unsigned int)j) * alpha.v[j];
         }
     }
 
-    Vector_Report(stdout, x, "%lf", "This is vector x");
-    Vector_Report(stdout, rhs, "%lf", "This is vector rhs");
+    Vector_Report(F, x, "%lf", "This is vector x");
+    Vector_Report(F, rhs, "%lf", "This is vector rhs");
 
     Solve_Vandermonte(x, rhs);
-    Vector_Report(stdout, rhs, "%lf", "This is the solved alpha.");
+    Vector_Report(F, rhs, "%lf", "This is the solved alpha.");
+    fprintf(F, "The polynom:\n f(x) = ");
+    for (unsigned int i = 0; i < x.n; i++)
+    {
+        fprintf(F, "%lf*x^%u + ", rhs.v[i], i);
+    }
 }
 
 double myPow(double x, unsigned int n)
@@ -158,16 +162,18 @@ double myPow(double x, unsigned int n)
     return y;
 }
 
-int main(void)
+int main(int n, char **args)
 {
     Vector a;
-    a = Vector_Create(4);
 
-    a.v[0] = 0;
-    a.v[1] = 0;
-    a.v[2] = 0;
-    a.v[3] = 1;
+    a = Vector_Create((unsigned int)n - 1);
 
-    Vector_Report(stdout, a, "%lf", "This is the alpha started with");
-    Compare(a);
+    for (int i = 0; i < n - 1; i++)
+    {
+        printf("String: %s\n", args[i + 1]);
+        a.v[i] = atof(args[i + 1]);
+    }
+
+    Vector_Report(stdout, a, "%.2lf", "This is the alpha started with");
+    Compare(stdout, a);
 }
