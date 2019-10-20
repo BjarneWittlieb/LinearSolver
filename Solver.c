@@ -9,16 +9,14 @@ Vector Solve_Triangular_Backwards(Matrix A, Vector b)
 {
     double sum;
     assert(A.n == b.n && A.n != 0);
-    for (unsigned int i = A.n - 1; i >= 0; i--)
+    for (unsigned int i = A.n; i >= 1; i--)
     {
         sum = 0;
-        for (unsigned int j = i + 1; j < A.n; j++)
+        for (unsigned int j = i; j < A.n; j++)
         {
-            sum += b.v[j] * Matrix_Get(A, i, j);
+            sum += b.v[j] * Matrix_Get(A, i - 1, j);
         }
-        b.v[i] = (-sum + b.v[i]) / Matrix_Get(A, i, i);
-        if (i == 0)
-            break;
+        b.v[i - 1] = (-sum + b.v[i]) / Matrix_Get(A, i - 1, i);
     }
     return b;
 }
@@ -86,25 +84,20 @@ Vector Solve_Gauss(Matrix A, Vector b)
 // creates a Vandermonte Matrix with vector x and solves for y using recursiveness. Stores result in y.
 Vector Solve_Vandermonte(Vector x, Vector rhs)
 {
-    // the outer loop, where the dimension goes down. but the actual value i need is low, so dimension goes up i guess
-    for (int dim = 1; dim <= (int)x.n; dim++)
+    for (int k = 0; k < (int)x.n - 1; k++)
     {
-        for (int i = dim; i < (int)x.n; i++)
+        for (int i = k + 1; i < (int)x.n; i++)
         {
-            rhs.v[i] = (rhs.v[i] - rhs.v[dim - 1]) / (x.v[i] - x.v[dim - 1]);
+            rhs.v[i] = (rhs.v[i] - rhs.v[k]) / (x.v[i] - x.v[k]);
         }
     }
-    // Vector_Report(stdout, rhs, "%lf", "the vector rhs in mid");
     for (int xi = x.n - 2; xi >= 0; xi--)
     {
         for (int i = xi; i < (int)x.n - 1; i++)
         {
             rhs.v[i] = rhs.v[i] - x.v[xi] * rhs.v[i + 1];
-            // printf("i: %u, xi: %u\n", i, xi);
-            // Vector_Report(stdout, rhs, "%lf", "the vector rhs in mid mid");
         }
     }
-
     return rhs;
 }
 
@@ -149,11 +142,10 @@ double evaluate_Polynom(double x, Vector alpha)
     double y;
 
     y = 0;
-    for (int i = (int)alpha.n; i > 0; i--)
+    for (int i = (int)alpha.n; i >= 0; i--)
     {
         y = y * x + alpha.v[i];
     }
-    y += alpha.v[0];
     return y;
 }
 
@@ -163,16 +155,11 @@ int main(int k, char **args)
     Vector a;
     RNG rng;
     FILE *F;
+
+    rng = RNG_Set_Knuth();
     n = (int)atof(args[1]);
     F = fopen("moin.txt", "w+");
-
-    a = Vector_Create(n); // (unsigned int)n - 1);
-    // a = Vector_Create_Random((unsigned int)n - 1, &rng, -10.0, 10.0);
-
-    for (int i = 0; i < n; i++)
-    {
-        a.v[i] = 1.0; // atof(args[i + 1]);
-    }
+    a = Vector_Create_Random((unsigned int)n, &rng, -10.0, 10.0);
 
     Vector_Report(F, a, "%.2e", "This is the alpha started with");
     Compare(F, a);
