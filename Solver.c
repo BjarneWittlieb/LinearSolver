@@ -5,10 +5,28 @@
 #include <assert.h>
 #include <math.h>
 
+Vector Solve_Triangular_Backwards(Matrix A, Vector b)
+{
+    double sum;
+    assert(A.n == b.n && A.n != 0);
+    for (unsigned int i = A.n - 1; i >= 0; i--)
+    {
+        sum = 0;
+        for (unsigned int j = i + 1; j < A.n; j++)
+        {
+            sum += b.v[j] * Matrix_Get(A, i, j);
+        }
+        b.v[i] = (-sum + b.v[i]) / Matrix_Get(A, i, i);
+        if (i == 0)
+            break;
+    }
+    return b;
+}
+
 // Solves the Matrix Ax = b using givens rotations and saves x in vector b. Also returns b.
 Vector Solve_Givens(Matrix A, Vector b)
 {
-    double s, c, t, x, y, sum;
+    double s, c, t, x, y;
     assert(A.n == b.n);
 
     Matrix_Rotate(A);
@@ -38,24 +56,13 @@ Vector Solve_Givens(Matrix A, Vector b)
     }
     // Vector_Report(stdout, b, "%lf", "Modifiziertes b");
 
-    // calculating solution and storing it in vector b
-    for (int i = A.n - 1; i >= 0; i--)
-    {
-        sum = 0;
-        for (unsigned int j = i + 1; j < A.n; j++)
-        {
-            sum += b.v[j] * Matrix_Get(A, (unsigned int)i, j);
-        }
-        b.v[i] = (-sum + b.v[i]) / Matrix_Get(A, (unsigned int)i, (unsigned int)i);
-    }
-
-    return b;
+    return Solve_Triangular_Backwards(A, b);
 }
 
 // solves the Matrix Ax = b using gaussian algorithm and saves x in vector b and also returns b.
 Vector Solve_Gauss(Matrix A, Vector b)
 {
-    double lambda, x, y, sum;
+    double lambda, x, y;
     assert(A.n == b.n);
 
     Matrix_Gauss(A);
@@ -73,27 +80,16 @@ Vector Solve_Gauss(Matrix A, Vector b)
     }
     // Vector_Report(stdout, b, "%lf", "Modifiziertes b");
 
-    // calculating solution and storing it in vector b
-    for (int i = A.n - 1; i >= 0; i--)
-    {
-        sum = 0;
-        for (unsigned int j = i + 1; j < A.n; j++)
-        {
-            sum += b.v[j] * Matrix_Get(A, (unsigned int)i, j);
-        }
-        b.v[i] = (-sum + b.v[i]) / Matrix_Get(A, (unsigned int)i, (unsigned int)i);
-    }
-
-    return b;
+    return Solve_Triangular_Backwards(A, b);
 }
 
 // creates a Vandermonte Matrix with vector x and solves for y using recursiveness. Stores result in y.
 Vector Solve_Vandermonte(Vector x, Vector rhs)
 {
     // the outer loop, where the dimension goes down. but the actual value i need is low, so dimension goes up i guess
-    for (int dim = 1; (unsigned int)dim <= x.n; dim++)
+    for (int dim = 1; dim <= (int)x.n; dim++)
     {
-        for (int i = dim; (unsigned int)i < x.n; i++)
+        for (int i = dim; i < (int)x.n; i++)
         {
             rhs.v[i] = (rhs.v[i] - rhs.v[dim - 1]) / (x.v[i] - x.v[dim - 1]);
         }
@@ -101,7 +97,7 @@ Vector Solve_Vandermonte(Vector x, Vector rhs)
     // Vector_Report(stdout, rhs, "%lf", "the vector rhs in mid");
     for (int xi = x.n - 2; xi >= 0; xi--)
     {
-        for (int i = xi; (unsigned int)i < x.n - 1; i++)
+        for (int i = xi; i < (int)x.n - 1; i++)
         {
             rhs.v[i] = rhs.v[i] - x.v[xi] * rhs.v[i + 1];
             // printf("i: %u, xi: %u\n", i, xi);
@@ -125,55 +121,61 @@ void Compare(FILE *F, Vector alpha)
     // creating the vector x
     for (int i = 0; (unsigned int)i < alpha.n; i++)
     {
-        x.v[i] = -1.0 + step * i;
+        x.v[i] = -1 + step * i;
+        // x.v[i] = pow(2.0, -(double)i);
     }
 
     // evaluting the right hand side
     for (int i = 0; (unsigned int)i < x.n; i++)
     {
-        for (int j = 0; (unsigned int)j < x.n; j++)
-        {
-            rhs.v[i] += myPow(x.v[i], (unsigned int)j) * alpha.v[j];
-        }
+        rhs.v[i] = evaluate_Polynom(x.v[i], alpha);
     }
 
-    Vector_Report(F, x, "%lf", "This is vector x");
-    Vector_Report(F, rhs, "%lf", "This is vector rhs");
+    Vector_Report(F, x, "%e", "This is vector x");
+    Vector_Report(F, rhs, "%e", "This is vector rhs");
 
     Solve_Vandermonte(x, rhs);
-    Vector_Report(F, rhs, "%lf", "This is the solved alpha.");
-    fprintf(F, "The polynom:\n f(x) = ");
+    Vector_Report(F, rhs, "%e", "This is the solved alpha.");
+    fprintf(F, "The relative error:\n");
     for (unsigned int i = 0; i < x.n; i++)
     {
-        fprintf(F, "%lf*x^%u + ", rhs.v[i], i);
+        fprintf(F, "%u %e\n", i, fabs(alpha.v[i] - rhs.v[i]) / fabs(alpha.v[i]));
     }
 }
 
-double myPow(double x, unsigned int n)
+// calculates a value of a polynom where the coefficients are stored in alpha evaluated in x.
+double evaluate_Polynom(double x, Vector alpha)
 {
     double y;
 
-    y = 1;
-    for (unsigned int i = 0; i < n; i++)
+    y = 0;
+    for (int i = (int)alpha.n; i > 0; i--)
     {
-        y *= x;
+        y = y * x + alpha.v[i];
     }
-
+    y += alpha.v[0];
     return y;
 }
 
-int main(int n, char **args)
+int main(int k, char **args)
 {
+    int n;
     Vector a;
+    RNG rng;
+    FILE *F;
+    n = (int)atof(args[1]);
+    F = fopen("moin.txt", "w+");
 
-    a = Vector_Create((unsigned int)n - 1);
+    a = Vector_Create(n); // (unsigned int)n - 1);
+    // a = Vector_Create_Random((unsigned int)n - 1, &rng, -10.0, 10.0);
 
-    for (int i = 0; i < n - 1; i++)
+    for (int i = 0; i < n; i++)
     {
-        printf("a%u: %s\n", n - i - 2, args[i + 1]);
-        a.v[i] = atof(args[i + 1]);
+        a.v[i] = 1.0; // atof(args[i + 1]);
     }
 
-    Vector_Report(stdout, a, "%.2lf", "This is the alpha started with");
-    Compare(stdout, a);
+    Vector_Report(F, a, "%.2e", "This is the alpha started with");
+    Compare(F, a);
+
+    fclose(F);
 }

@@ -1,10 +1,8 @@
 #include "Matrix.h"
+#include "Matrix_Rotate.h"
 #include <assert.h>
 #include <stdio.h>
 #include <math.h>
-
-void Matrix_Rotate(Matrix);
-void Matrix_Rotate_Back(Matrix);
 
 void Matrix_Rotate_Back(Matrix A)
 {
@@ -78,24 +76,24 @@ void Matrix_Gauss(Matrix A)
 {
 	double lambda, x, y, tmp1, tmp2;
 
-	for (unsigned int startIndex = 0; startIndex < A.m - 1; startIndex++)
+	for (unsigned int j = 0; j < A.m - 1; j++)
 	{
-		for (unsigned int i = startIndex + 1; i < A.m; i++)
+		for (unsigned int i = j + 1; i < A.m; i++)
 		{
-			x = Matrix_Get(A, startIndex, startIndex);
-			y = Matrix_Get(A, i, startIndex);
+			x = Matrix_Get(A, j, j);
+			y = Matrix_Get(A, i, j);
 
 			assert(x != 0);
 
 			lambda = -y / x;
 
-			for (unsigned int j = startIndex; j < (unsigned int)A.m; j++)
+			for (unsigned int k = j; k < (unsigned int)A.m; k++)
 			{
-				tmp1 = Matrix_Get(A, i, j);
-				tmp2 = Matrix_Get(A, startIndex, j);
-				Matrix_Set(A, lambda * tmp2 + tmp1, i, j);
+				tmp1 = Matrix_Get(A, i, k);
+				tmp2 = Matrix_Get(A, j, k);
+				Matrix_Set(A, lambda * tmp2 + tmp1, i, k);
 			}
-			Matrix_Set(A, lambda, i, startIndex);
+			Matrix_Set(A, lambda, i, j);
 		}
 	}
 }
