@@ -82,11 +82,9 @@ void Matrix_Gauss(Matrix A)
 		{
 			x = Matrix_Get(A, j, j);
 			y = Matrix_Get(A, i, j);
-
 			assert(x != 0);
 
 			lambda = -y / x;
-
 			for (unsigned int k = j; k < (unsigned int)A.m; k++)
 			{
 				tmp1 = Matrix_Get(A, i, k);

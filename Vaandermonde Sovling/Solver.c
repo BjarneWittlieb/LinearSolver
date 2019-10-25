@@ -62,10 +62,8 @@ Vector Solve_Gauss(Matrix A, Vector b)
 {
     double lambda, x, y;
     assert(A.n == b.n);
-
     Matrix_Gauss(A);
 
-    // gauss on b, oh yeah
     for (unsigned int col = 0; col < A.n - 1; col++)
     {
         for (unsigned int row = col + 1; row < A.n; row++)
@@ -76,8 +74,6 @@ Vector Solve_Gauss(Matrix A, Vector b)
             b.v[row] = y + lambda * x;
         }
     }
-    // Vector_Report(stdout, b, "%lf", "Modifiziertes b");
-
     return Solve_Triangular_Backwards(A, b);
 }
 
