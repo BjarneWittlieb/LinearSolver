@@ -154,10 +154,10 @@ int main(int k, char **args)
 
     rng = RNG_Set_Knuth();
     n = (int)atof(args[1]);
-    F = fopen("moin.txt", "w+");
+    F = fopen("precision_error_n20.txt", "w+");
     a = Vector_Create_Random((unsigned int)n, &rng, -10.0, 10.0);
 
-    Vector_Report(F, a, "%.2e", "This is the alpha started with");
+    Vector_Report(F, a, "%e", "This is the alpha started with");
     Compare(F, a);
 
     fclose(F);
